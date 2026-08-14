@@ -156,7 +156,6 @@ jobs:
 
       - name: Sync device dependencies
         working-directory: workspace
-        continue-on-error: true
         run: |
           dep=""
           for candidate in twrp.dependencies omni.dependencies; do
@@ -171,6 +170,7 @@ jobs:
           fi
           echo "Converting ${dep}"
           bash "${GITHUB_WORKSPACE}/scripts/convert.sh" "${dep}"
+          cat .repo/local_manifests/roomservice.xml
           repo sync -j"$(nproc)" --force-sync --no-clone-bundle --current-branch --no-tags
 
       - name: Apply device patches
