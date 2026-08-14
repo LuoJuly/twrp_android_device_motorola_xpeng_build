@@ -1,0 +1,44 @@
+name: Build TWRP 12.1 (xpeng)
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_tree_ref:
+        description: Device tree branch/tag (LuoJuly/twrp_android_device_motorola_xpeng)
+        required: false
+        default: android-12.1
+      lunch_combo:
+        description: Lunch combo
+        required: false
+        default: twrp_xpeng-eng
+      publish_release:
+        description: Create a GitHub Release (not marked Latest)
+        type: boolean
+        default: true
+      runner:
+        description: Runner label (ubuntu-24.04 or self-hosted)
+        required: false
+        default: ubuntu-24.04
+
+concurrency:
+  group: twrp-12.1
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event.repository.owner.id == github.event.sender.id
+    uses: ./.github/workflows/reusable-build-twrp.yml
+    permissions:
+      contents: write
+    secrets: inherit
+    with:
+      manifest_url: https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp
+      manifest_branch: twrp-12.1
+      device_tree_ref: ${{ inputs.device_tree_ref }}
+      lunch_combo: ${{ inputs.lunch_combo }}
+      java_version: '11'
+      artifact_basename: boot_twrp_xpeng_stock_3.7.1_a12.1
+      tag_prefix: v3.7.1_12-0
+      make_latest: false
+      publish_release: ${{ inputs.publish_release }}
+      runner: ${{ inputs.runner }}

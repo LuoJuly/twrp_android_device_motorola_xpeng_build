@@ -1,0 +1,6 @@
+/workspace/
+/out/
+/.tools/
+*.img
+*.zip
+.DS_Store
