@@ -35,7 +35,8 @@ Release tag 形如 `v3.7.1_12-0-YYYYMMDD` / `v3.7.1_16-0-YYYYMMDD`；同日重�
    - `patches/vibrator/*.patch` → `vendor/qcom/opensource/vibrator`
    - `patches/hardware/*.patch` → `hardware/interfaces/boot`（16.0 `tryGetService`，避免 HIDL 卡死黑屏）
 5. `lunch` + `make bootimage`
-6. 上传 artifact；可选发 GitHub Release
+6. 若设备树有 `scripts/repack-boot.sh`（**android-16.0**），再打一次 **legacy LZ4**（`lz4 -l`），与本地 `mka bootimage` 后的步骤相同。Soong 的 `BOARD_RAMDISK_USE_LZ4` 是 frame LZ4，Motokernel 解不开会黑屏。**android-12.1** 无此脚本，保持 Soong 产物。
+7. 上传 artifact；可选发 GitHub Release
 
 `boot.img` 按分区大小 padding，文件约 96 MB；实际 ramdisk 大小才影响 KernelSU 解包。
 

@@ -194,6 +194,22 @@ jobs:
           lunch "${LUNCH_COMBO}"
           make "${BUILD_TARGET}image" -j"$(nproc)"
 
+      # Soong BOARD_RAMDISK_USE_LZ4 writes a modern lz4 frame. Motokernel
+      # (xpeng 5.4) only unpacks the legacy frame (`lz4 -l`), same as local
+      # `device/motorola/xpeng/scripts/repack-boot.sh` after mka bootimage.
+      # 12.1 has no such script — leave the Soong image alone.
+      - name: Repack bootimage (Motokernel legacy LZ4)
+        working-directory: workspace
+        run: |
+          script="${DEVICE_PATH}/scripts/repack-boot.sh"
+          if [[ -f "${script}" ]]; then
+            echo "==> ${script}"
+            export ANDROID_BUILD_TOP="$(pwd)"
+            bash "${script}"
+          else
+            echo "==> No ${script}; keep Soong ${BUILD_TARGET}.img"
+          fi
+
       - name: Collect artifact
         id: artifact
         run: |
