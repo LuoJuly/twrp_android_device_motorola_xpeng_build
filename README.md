@@ -8,10 +8,10 @@ GitHub Actions 仓库：为 Motorola **xpeng**（XT2175-1 G200 5G / XT2175-2 Edg
 
 在仓库 **Actions** 页手动运行（`workflow_dispatch`）。仅仓库 owner 可触发。
 
-| Workflow | 设备树分支 | Manifest | Lunch | JDK | 产物 | GitHub Latest |
+| Workflow | 设备树分支 | Manifest | Lunch | JDK | 界面版本 / 产物 | GitHub Latest |
 |---|---|---|---|---|---|---|
-| **Build TWRP 12.1 (xpeng)** | `android-12.1` | [minimal-manifest-twrp](https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp) `twrp-12.1` | `twrp_xpeng-eng` | 11 | `boot_twrp_xpeng_stock_3.7.1_a12.1.img` | 否 |
-| **Build TWRP 16.0 (xpeng)** | `android-16.0` | [TWRP-Test](https://github.com/TWRP-Test/platform_manifest_twrp_aosp) `twrp-16.0` | `twrp_xpeng-bp2a-eng` | 17 | `boot_twrp_xpeng_lineage_3.7.1_a16.0.img` | 是 |
+| **Build TWRP 12.1 (xpeng)** | `android-12.1` | [minimal-manifest-twrp](https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp) `twrp-12.1` | `twrp_xpeng-eng` | 11 | `3.7.1_12-0_stock_by LuoJuly` / `boot_twrp_xpeng_stock_3.7.1_a12.1.img` | 否 |
+| **Build TWRP 16.0 (xpeng)** | `android-16.0` | [TWRP-Test](https://github.com/TWRP-Test/platform_manifest_twrp_aosp) `twrp-16.0` | `twrp_xpeng-bp2a-eng` | 17 | `3.7.1_16-0_lineage_by LuoJuly` / `boot_twrp_xpeng_lineage_3.7.1_a16.0.img` | 是 |
 
 可选输入：
 

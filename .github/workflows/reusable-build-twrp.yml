@@ -40,6 +40,11 @@ on:
       tag_prefix:
         required: true
         type: string
+      version_label:
+        description: Displayed TWRP version string (About screen / release notes)
+        required: false
+        type: string
+        default: ''
       make_latest:
         required: false
         type: boolean
@@ -71,6 +76,7 @@ jobs:
       BUILD_TARGET: ${{ inputs.build_target }}
       ARTIFACT_BASENAME: ${{ inputs.artifact_basename }}
       TAG_PREFIX: ${{ inputs.tag_prefix }}
+      VERSION_LABEL: ${{ inputs.version_label }}
 
     steps:
       - name: Maximize build space
@@ -227,7 +233,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/${{ inputs.artifact_basename }}.img
-          name: ${{ steps.artifact.outputs.tag }}
+          name: ${{ inputs.version_label != '' && format('TWRP {0} ({1})', inputs.version_label, steps.artifact.outputs.tag) || steps.artifact.outputs.tag }}
           tag_name: ${{ steps.artifact.outputs.tag }}
           make_latest: ${{ inputs.make_latest }}
           fail_on_unmatched_files: true
@@ -236,6 +242,7 @@ jobs:
 
             | | |
             |---|---|
+            | TWRP version | **${{ inputs.version_label != '' && inputs.version_label || inputs.tag_prefix }}** |
             | Manifest | `${{ inputs.manifest_url }}` @ `${{ inputs.manifest_branch }}` |
             | Device tree | `${{ inputs.device_tree_url }}` @ `${{ inputs.device_tree_ref }}` (`${{ steps.artifact.outputs.device_tree_sha }}`) |
             | Lunch | `${{ inputs.lunch_combo }}` |

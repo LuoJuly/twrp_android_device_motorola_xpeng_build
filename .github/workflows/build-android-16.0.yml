@@ -39,6 +39,7 @@ jobs:
       java_version: '17'
       artifact_basename: boot_twrp_xpeng_lineage_3.7.1_a16.0
       tag_prefix: v3.7.1_16-0
+      version_label: 3.7.1_16-0_lineage_by LuoJuly
       make_latest: true
       publish_release: ${{ inputs.publish_release }}
       runner: ${{ inputs.runner }}
