@@ -28,10 +28,12 @@ Release tag 形如 `v3.7.1_12-0-YYYYMMDD` / `v3.7.1_16-0-YYYYMMDD`；同日重�
 
 1. `repo init --depth=1` + `repo sync`
 2. clone 设备树到 `device/motorola/xpeng`
-3. 若存在 `twrp.dependencies`，转成 roomservice 再 sync（16.0 会拉 `device/qcom/twrp-common`）
+3. 若存在 `twrp.dependencies`，转成 roomservice 再 sync（16.0 会拉 `device/qcom/twrp-common` 和 `device/qcom/common`）
 4. 应用设备树 `patches/`（**不含** `patches/disabled/`）：
    - `patches/*.patch` → `bootable/recovery`
-   - `patches/gpt-utils/*.patch` → `device/qcom/common`（12.1 的 backup GPT 修复）
+   - `patches/gpt-utils/*.patch` → `device/qcom/common`（backup GPT）
+   - `patches/vibrator/*.patch` → `vendor/qcom/opensource/vibrator`
+   - `patches/hardware/*.patch` → `hardware/interfaces/boot`（16.0 `tryGetService`，避免 HIDL 卡死黑屏）
 5. `lunch` + `make bootimage`
 6. 上传 artifact；可选发 GitHub Release
 

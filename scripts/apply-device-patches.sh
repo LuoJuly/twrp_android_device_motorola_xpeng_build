@@ -8,6 +8,7 @@
 #   patches/vibrator/*.patch   -> vendor/qcom/opensource/vibrator
 #   patches/init/*.patch       -> system/core
 #   patches/gpt-utils/*.patch  -> device/qcom/common
+#   patches/hardware/*.patch   -> hardware/interfaces/boot
 #
 # patches/disabled/ is never applied.
 set -euo pipefail
@@ -53,6 +54,9 @@ for p in "${PATCH_DIR}/init"/*.patch; do
 done
 for p in "${PATCH_DIR}/gpt-utils"/*.patch; do
   apply_one "${WORKSPACE}/device/qcom/common" "$p" "gpt-utils/$(basename "$p")"
+done
+for p in "${PATCH_DIR}/hardware"/*.patch; do
+  apply_one "${WORKSPACE}/hardware/interfaces/boot" "$p" "hardware/$(basename "$p")"
 done
 shopt -u nullglob
 echo "==> Device patches done"
