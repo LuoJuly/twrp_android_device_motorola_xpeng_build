@@ -18,7 +18,7 @@ GitHub Actions 仓库：为 Motorola **xpeng**（XT2175-1 G200 5G / XT2175-2 Edg
 - `device_tree_ref` — 覆盖设备树分支（默认见上表）
 - `lunch_combo` — 覆盖 lunch
 - `publish_release` — 是否发 Release（默认开）
-- `runner` — `ubuntu-24.04`（默认）或 `self-hosted`
+- `runner` — 12.1 默认 `ubuntu-24.04`；**16.0 默认 `self-hosted`**（托管机编 A16 会 OOM 失联）
 
 Release tag 形如 `v3.7.1_12-0-YYYYMMDD` / `v3.7.1_16-0-YYYYMMDD`；同日重复构建会追加 `-r<run_number>`。
 
@@ -40,9 +40,9 @@ Release tag 形如 `v3.7.1_12-0-YYYYMMDD` / `v3.7.1_16-0-YYYYMMDD`；同日重�
 
 `boot.img` 按分区大小 padding，文件约 96 MB；实际 ramdisk 大小才影响 KernelSU 解包。
 
-## 磁盘说明
+## Runner
 
-GitHub-hosted runner 对 **16.0**（AOSP 16 源码）可能偏紧。若 sync/编译因磁盘失败，把 `runner` 改成自建 `self-hosted` 再跑。12.1 的 minimal-manifest 一般能在 `ubuntu-24.04` 上完成。
+**16.0** 必须用自建 `self-hosted`（GitHub-hosted 在 `make bootimage` 阶段会因内存被掐、runner 失联）。仓库 Settings → Actions → Runners 里要有一台在线、带 `self-hosted` 标签的机器（磁盘/内存需能编 AOSP 16）。12.1 仍默认 `ubuntu-24.04`。
 
 ## 刷入
 

@@ -16,9 +16,9 @@ on:
         type: boolean
         default: true
       runner:
-        description: Runner label (ubuntu-24.04 or self-hosted)
+        description: Runner label (self-hosted required; ubuntu-24.04 OOMs on A16)
         required: false
-        default: ubuntu-24.04
+        default: self-hosted
 
 concurrency:
   group: twrp-16.0
