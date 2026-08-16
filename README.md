@@ -1,55 +1,154 @@
-# TWRP xpeng GitHub Actions
+# TWRP xpeng build (GitHub Actions + local)
 
-GitHub Actions 仓库：为 Motorola **xpeng**（XT2175-1 G200 5G / XT2175-2 Edge S30）编译 TWRP `boot.img`（recovery-as-boot）。
+GitHub Actions and local build notes for Motorola **xpeng** (XT2175-1 G200 5G / XT2175-2 Edge S30).
 
-设备树：[LuoJuly/twrp_android_device_motorola_xpeng](https://github.com/LuoJuly/twrp_android_device_motorola_xpeng)
+Output is always **recovery-as-boot** `boot.img` (~96 MB padded). Device tree: [LuoJuly/twrp_android_device_motorola_xpeng](https://github.com/LuoJuly/twrp_android_device_motorola_xpeng).
 
-## Workflows
+| Tree | Device-tree branch | Manifest | Lunch | Host JDK | About string / artifact |
+|---|---|---|---|---|---|
+| **12.1** (stock) | `android-12.1` | [minimal-manifest-twrp](https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp) `twrp-12.1` | `twrp_xpeng-eng` | 11 | `3.7.1_12-0_stock_by LuoJuly` / `boot_twrp_xpeng_stock_3.7.1_a12.1.img` |
+| **16.0** (Lineage 23.2) | `android-16.0` | [TWRP-Test](https://github.com/TWRP-Test/platform_manifest_twrp_aosp) `twrp-16.0` | `twrp_xpeng-bp2a-eng` | 17 | `3.7.1_16-0_lineage_by LuoJuly` / `boot_twrp_xpeng_lineage_3.7.1_a16.0.img` |
 
-在仓库 **Actions** 页手动运行（`workflow_dispatch`）。仅仓库 owner 可触发。
+Full local steps: [docs/local-android-12.1.md](docs/local-android-12.1.md) · [docs/local-android-16.0.md](docs/local-android-16.0.md)
 
-| Workflow | 设备树分支 | Manifest | Lunch | JDK | 界面版本 / 产物 | GitHub Latest |
-|---|---|---|---|---|---|---|
-| **Build TWRP 12.1 (xpeng)** | `android-12.1` | [minimal-manifest-twrp](https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp) `twrp-12.1` | `twrp_xpeng-eng` | 11 | `3.7.1_12-0_stock_by LuoJuly` / `boot_twrp_xpeng_stock_3.7.1_a12.1.img` | 否 |
-| **Build TWRP 16.0 (xpeng)** | `android-16.0` | [TWRP-Test](https://github.com/TWRP-Test/platform_manifest_twrp_aosp) `twrp-16.0` | `twrp_xpeng-bp2a-eng` | 17 | `3.7.1_16-0_lineage_by LuoJuly` / `boot_twrp_xpeng_lineage_3.7.1_a16.0.img` | 是 |
+---
 
-可选输入：
+## GitHub Actions
 
-- `device_tree_ref` — 覆盖设备树分支（默认见上表）
-- `lunch_combo` — 覆盖 lunch
-- `publish_release` — 是否发 Release（默认开）
-- `runner` — 12.1 默认 `ubuntu-24.04`；**16.0 默认 `self-hosted`**（托管机编 A16 会 OOM 失联）
+Run **Actions → Build TWRP 12.1 / 16.0 → Run workflow**. Owner-only.
 
-Release tag 形如 `v3.7.1_12-0-YYYYMMDD` / `v3.7.1_16-0-YYYYMMDD`；同日重复构建会追加 `-r<run_number>`。
+| Input | Notes |
+|---|---|
+| `device_tree_ref` | Device-tree branch (defaults in the table above) |
+| `lunch_combo` | Override lunch |
+| `publish_release` | Upload a GitHub Release (default on) |
+| `runner` | **12.1** defaults to `ubuntu-24.04`. **16.0** defaults to `self-hosted` (GitHub-hosted OOM / runner disconnect during `make bootimage`) |
 
-12.1 的 Release **不会**抢 16.0 的 Latest。
+Tags look like `v3.7.1_12-0-YYYYMMDD` / `v3.7.1_16-0-YYYYMMDD` (`-r<run>` if the tag exists). 12.1 releases are **not** marked Latest.
 
-## 编译时会做什么
+Pipeline: `repo init --depth=1` → sync → clone device tree → `twrp.dependencies` → `scripts/apply-device-patches.sh` → `lunch` + `make bootimage` → on 16.0, `scripts/repack-boot.sh` (Motokernel **legacy LZ4** `lz4 -l`). 12.1 has no repack script.
 
-1. `repo init --depth=1` + `repo sync`
-2. clone 设备树到 `device/motorola/xpeng`
-3. 若存在 `twrp.dependencies`，转成 roomservice 再 sync（16.0 会拉 `device/qcom/twrp-common` 和 `device/qcom/common`）
-4. 应用设备树 `patches/`（**不含** `patches/disabled/`）：
-   - `patches/*.patch` → `bootable/recovery`
-   - `patches/gpt-utils/*.patch` → `device/qcom/common`（backup GPT）
-   - `patches/vibrator/*.patch` → `vendor/qcom/opensource/vibrator`
-   - `patches/hardware/*.patch` → `hardware/interfaces/boot`（16.0 `tryGetService`，避免 HIDL 卡死黑屏）
-5. `lunch` + `make bootimage`
-6. 若设备树有 `scripts/repack-boot.sh`（**android-16.0**），再打一次 **legacy LZ4**（`lz4 -l`），与本地 `mka bootimage` 后的步骤相同。Soong 的 `BOARD_RAMDISK_USE_LZ4` 是 frame LZ4，Motokernel 解不开会黑屏。**android-12.1** 无此脚本，保持 Soong 产物。
-7. 上传 artifact；可选发 GitHub Release
+Register a [self-hosted runner](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners) with the `self-hosted` label before running 16.0.
 
-`boot.img` 按分区大小 padding，文件约 96 MB；实际 ramdisk 大小才影响 KernelSU 解包。
+---
 
-## Runner
+## Host packages (both trees)
 
-**16.0** 必须用自建 `self-hosted`（GitHub-hosted 在 `make bootimage` 阶段会因内存被掐、runner 失联）。仓库 Settings → Actions → Runners 里要有一台在线、带 `self-hosted` 标签的机器（磁盘/内存需能编 AOSP 16）。12.1 仍默认 `ubuntu-24.04`。
-
-## 刷入
+Linux x86_64 (Ubuntu 22.04 / 24.04). Install `repo`:
 
 ```bash
-fastboot boot boot_twrp_xpeng_*.img          # 一次性启动，不改写分区
-# 或
+mkdir -p ~/bin
+curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+chmod a+x ~/bin/repo
+export PATH="$HOME/bin:$PATH"
+```
+
+```bash
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  git-core gnupg flex bison build-essential zip unzip curl wget \
+  zlib1g-dev libc6-dev-i386 lib32z1-dev lib32ncurses-dev \
+  x11proto-core-dev libx11-dev libgl1-mesa-dev libxml2-utils \
+  xsltproc python3 python-is-python3 gcc-multilib g++-multilib \
+  libncurses-dev libssl-dev bc rsync schedtool pngcrush imagemagick \
+  lzop liblz4-tool ccache tree libxml2 squashfs-tools \
+  libgtk-3-dev libglu1-mesa-dev gperf cpio
+```
+
+| | 12.1 | 16.0 |
+|---|---|---|
+| JDK | 11 (`openjdk-11-jdk` or Temurin 11) | 17 (tree also ships `prebuilts/jdk/jdk21`) |
+| RAM / disk | ~16 GB / ~80 GB | 32 GB+ / ~150 GB+ |
+| Workspace | `~/android/twrp-12.1` | `~/android/twrp-16.0` |
+
+Soong **cannot follow a symlink** for `device/motorola/xpeng` — `rsync`/copy the device tree, do not `ln -s`.
+
+This repo’s `scripts/apply-device-patches.sh` and `scripts/convert.sh` match Actions. Clone it next to the device tree:
+
+```bash
+git clone https://github.com/LuoJuly/twrp_android_device_motorola_xpeng_build.git ~/android/twrp_android_device_motorola_xpeng_build
+git clone -b android-12.1 https://github.com/LuoJuly/twrp_android_device_motorola_xpeng.git ~/android/twrp_android_device_motorola_xpeng
+# 16.0: git -C ~/android/twrp_android_device_motorola_xpeng checkout android-16.0
+```
+
+---
+
+## Local: Android 12.1
+
+See [docs/local-android-12.1.md](docs/local-android-12.1.md) for the same steps in one page.
+
+```bash
+mkdir -p ~/android/twrp-12.1 && cd ~/android/twrp-12.1
+repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+repo sync -c -j$(nproc) --force-sync --no-clone-bundle --current-branch --no-tags
+
+mkdir -p device/motorola
+rsync -a --delete --exclude '.git' \
+  ~/android/twrp_android_device_motorola_xpeng/ device/motorola/xpeng/
+
+# twrp-12.1 manifest already has TeamWin android_device_qcom_common (gpt-utils).
+# No twrp.dependencies on this branch.
+
+bash ~/android/twrp_android_device_motorola_xpeng_build/scripts/apply-device-patches.sh \
+  "$PWD" device/motorola/xpeng
+
+. build/envsetup.sh
+export ALLOW_MISSING_DEPENDENCIES=true
+lunch twrp_xpeng-eng
+mka bootimage
+```
+
+Output: `out/target/product/xpeng/boot.img`  
+Ramdisk is slimmed by `BOARD_RECOVERY_IMAGE_PREPARE` → `recovery/slim-ramdisk.sh`. Do **not** run `repack-boot.sh` (16.0 only).
+
+Patches applied: `patches/*.patch` (0001–0006, 0009–0011, 0013–0015) → `bootable/recovery`; `patches/init/0012` → `system/core`; `patches/vibrator/0008` → QTI vibrator; `patches/gpt-utils/0007` → `device/qcom/common`. Overlay: delayed `keystore2` + VINTF `manifest.xml` under `recovery/root/`.
+
+---
+
+## Local: Android 16.0
+
+See [docs/local-android-16.0.md](docs/local-android-16.0.md).
+
+```bash
+mkdir -p ~/android/twrp-16.0 && cd ~/android/twrp-16.0
+repo init --depth=1 -u https://github.com/TWRP-Test/platform_manifest_twrp_aosp.git -b twrp-16.0
+repo sync -c -j$(nproc) --force-sync --no-clone-bundle --current-branch --no-tags
+
+git -C ~/android/twrp_android_device_motorola_xpeng checkout android-16.0
+mkdir -p device/motorola
+rsync -a --delete --exclude '.git' \
+  ~/android/twrp_android_device_motorola_xpeng/ device/motorola/xpeng/
+
+bash ~/android/twrp_android_device_motorola_xpeng_build/scripts/convert.sh \
+  device/motorola/xpeng/twrp.dependencies
+# roomservice: TeamWin twrp-common (android-14) + qcom common (android-12.1 gpt-utils)
+repo sync -c -j$(nproc) --force-sync --no-clone-bundle --current-branch --no-tags
+
+bash ~/android/twrp_android_device_motorola_xpeng_build/scripts/apply-device-patches.sh \
+  "$PWD" device/motorola/xpeng
+# recovery patches, gpt-utils/0007, vibrator/0008, hardware/0006 (HIDL tryGetService)
+
+. build/envsetup.sh
+export ALLOW_MISSING_DEPENDENCIES=true
+lunch twrp_xpeng-bp2a-eng
+mka bootimage
+
+# Required: Soong LZ4 frames will not unpack on Motokernel 5.4 (black screen).
+export ANDROID_BUILD_TOP="$PWD"
+bash device/motorola/xpeng/scripts/repack-boot.sh
+```
+
+Output: `out/target/product/xpeng/boot.img`  
+Kernel: ReSukiSU `lineage-23.2-ReSukiSU` (`5.4.302-moto-g37469fe9fcdd`). Decrypt is Keymaster 4.1 (not KeyMint/Weaver).
+
+---
+
+## Flash
+
+```bash
+fastboot boot boot_twrp_xpeng_*.img          # one-shot, does not rewrite the slot
+# or
 fastboot flash boot boot_twrp_xpeng_*.img
 ```
 
-`fastboot boot` 是一次性的：`ro.boot.slot_suffix` 仍是启动时的 slot。不要先 `fastboot set_active` 再立刻 `fastboot boot`。
+`fastboot boot` is one-shot: `ro.boot.slot_suffix` stays the launch slot. Do not `fastboot set_active` and then immediately `fastboot boot`.
